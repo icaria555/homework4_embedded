@@ -1,9 +1,3 @@
-//////////////////////////////////////////////////////////////////
-// Author: RSP @ ESL (Embedded System Lab), KMUTNB
-// Date: 16-Jul-2013
-// Target Board: Arduino Uno (ATmega328P, 5V, 16MHz)
-// Arduino IDE: version 1.0.5
-// HC-SR04 Ultrasonic module (using VCC=5V)
 
 #define ECHO_PIN  3  // Echo Pin (Input) -- from the ECHO pin of HC-SR04
 #define TRIG_PIN  5  // Trigger Pin (Output) -- to the TRIG pin of HC-SR04
@@ -21,10 +15,11 @@ void setup() {
   Serial.begin( 115200 ); // initialize serial, use baudrate=115200
 }
 
-
-
 volatile uint32_t count = 0;
-volatile uint8_t state1 = 0, state2 = 0;
+volatile uint8_t state = 1, finish_state = 0;
+
+unsigned long value1 = 0;
+unsigned long value2 = 0;
 
 void T1_init() {
   TCNT1 = 0;
@@ -48,18 +43,32 @@ void INT0_init() {
 }
 
 ISR(TIMER1_OVF_vect) { // ISR for Timer/Counter1 Overflow Interrupt
-  if(count == 99){
+  if(count == 119999){
     count = 0;
   } else 
     count++; // increment counter
 }
 
 ISR(INT0_vect) { // ISR for INT0
-  state1 ^= 1; // toggle state1
-  digitalWrite( LED1_PIN, state1 ); // update LED1 status
+  switch (state){
+    case 1:
+      if(digitalRead( ECHO_PIN)){
+        count = 0;
+        TCNT1 = 0;
+        state = 2;
+        value1 = count * TCNT1 ;
+      }
+    case 2:
+      if(digitalRead( ECHO_PIN)){
+        state = 1;
+        value2 = count * TCNT1 ;
+        finish_state = 1;
+      }
+  }
 }
 
 void loop() {
+  /*
   unsigned long duration_usec;
   unsigned long distance_mm;
   // v = 340 m/s = (340 * 100)/10^6 cm/usec = 34/1000 cm/usec
@@ -79,8 +88,18 @@ void loop() {
     break;
   }
   delay(300);
+  */
 }
 
+unsigned long pulse() {
+  while(finish_state != 1){
+    
+  }
+  finish_state = 0;
+  unsigned long duration_usec = 0;
+  return duration_usec;
+}
+/*
 unsigned long ping() {
   // send a pulse (at least 10 usec long) to the TRIG pin
   digitalWrite( TRIG_PIN, HIGH ); 
@@ -90,6 +109,8 @@ unsigned long ping() {
   unsigned long duration_usec = pulseIn( ECHO_PIN, HIGH );
   return duration_usec;
 }
+
+*/
 /////////////////////////////////////////////////////////////////////
 
 
