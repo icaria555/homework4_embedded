@@ -4,11 +4,11 @@
 #include <avr/io.h>
 
 void T1_init( );
-void INT0_init();
 
 void setup() {
   T1_init( );
-  INT0_init();
+  PCICR |= (1 << PCIE2); // enable Pin Change Interrupt 2
+  PCMSK2 |= (1 << PCINT18); // enable PCINT19 interrupt
   pinMode( TRIG_PIN, OUTPUT );
   pinMode( ECHO_PIN, INPUT );
   digitalWrite( TRIG_PIN, LOW ); // output LOW to the TRIG pin
@@ -33,20 +33,11 @@ void T1_init() {
   TIMSK1 = (1<<TOIE1); // Timer1 Overflow Interrupt Enable
 }
 
-void INT0_init() {
-  cli(); // disable global interrupt
-  EICRA |= (1 << ISC00); // any logical change
-  EIMSK |= (1 << INT0); // enable INT0 interrupt
-  sei(); // enable global interrupt
-}
-
 ISR(TIMER1_OVF_vect) { // ISR for Timer/Counter1 Overflow Interrupt
     count++; // increment counter
 }
 
-ISR(INT0_vect) { // ISR for INT0
-//  Serial.println( digitalRead( ECHO_PIN) );
-
+ISR(PCINT2_vect) { // ISR for INT0
   switch (state){
     case 1:
       if(digitalRead( ECHO_PIN) == 1){
@@ -98,7 +89,7 @@ unsigned long pulse() {
     //null
   }
   finish_state = 0;
-  Serial.println( "method pulse = " +  String(value2) );
+  Serial.println( "method pulse = " +  String(value2));
   return (value2);
 }
 
